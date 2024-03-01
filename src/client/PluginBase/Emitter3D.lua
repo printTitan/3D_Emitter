@@ -78,7 +78,8 @@ local function emit3DParticle(emitter3D:Part,amount:number)
     end    
 end
 
-local function onEmitterAdded(emitter3D:Part)
+-- emit the emitter3d based off it's rate
+local function startRateEmitting(emitter3D:Part)
     task.spawn(function()
         while emitter3D.Parent == workspace do
             emit3DParticle(emitter3D,1)
@@ -87,6 +88,15 @@ local function onEmitterAdded(emitter3D:Part)
     end)
 end
 
+local function onEmitter3DAdded(emitter3D:BasePart)
+    if not emitter3D:HasTag("Emitter3D") then
+        return
+    end
+
+    startRateEmitting(emitter3D)
+end
+
+-- Global Functions
 function Emitter3D.AssignPartAsEmitter(part:BasePart)
     local emitterConfig = Instance.new("Configuration")
     emitterConfig.Name = "EmitterConfig"
@@ -99,13 +109,7 @@ function Emitter3D.AssignPartAsEmitter(part:BasePart)
         return
     end
 
-
-local function onEmitter3DAdded(emitter3D:BasePart)
-    if not emitter3D:HasTag("Emitter3D") then
-        return
-    end
-
-    onEmitterAdded(emitter3D)
+    startRateEmitting(part)
 end
 
 for _ = 1,minimumEmitScripts do
@@ -120,4 +124,15 @@ end
 -- set up to add new emitters
 workspace.DescendantAdded:Connect(onEmitter3DAdded)
 
+--[[RunService.Stepped:Connect(function(time, deltaTime)
+    local totalAmount = 0
+    for num,actor in allEmitActors do
+        local toEmitNum = #actor.ToEmit:GetChildren()
+        print("emits for actor " .. tostring(num) .. ": " .. toEmitNum)
+        totalAmount+=toEmitNum
+    end
+
+
+    print("total particles:",totalAmount)
+end)--]]
 return Emitter3D
