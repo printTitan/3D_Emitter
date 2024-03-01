@@ -1,3 +1,8 @@
+-- Settings
+local minimumEmitScripts = 3
+local maxParticlesPerScript = 50
+
+
 -- Services
 local RunService = game:GetService("RunService")
 
@@ -6,6 +11,8 @@ local activeEmitScripts = script.Parent.ActiveEmitScripts
 
 -- Variables
 local allEmitScripts = {}
+
+local Emitter3D = {}
 
 local function random(min:number,max:number)
     return Random.new():NextNumber(min,max)
@@ -49,7 +56,7 @@ local function onEmitterAdded(emitter3D:Part)
     end)
 end
 
-local function assignAsEmitter(part:BasePart)
+function Emitter3D.AssignPartAsEmitter(part:BasePart)
     local emitterConfig = Instance.new("Configuration")
     emitterConfig.Name = "EmitterConfig"
     emitterConfig:SetAttribute("Rate",20)
@@ -64,13 +71,21 @@ local function assignAsEmitter(part:BasePart)
     onEmitterAdded(part)
 end
 
-workspace.DescendantAdded:Connect(function(emitter3D:BasePart)
+local function onEmitter3DAdded(emitter3D:BasePart)
     if not emitter3D:HasTag("Emitter3D") then
         return
     end
 
     onEmitterAdded(emitter3D)
-end)
+end
 
-addEmitScript()
-assignAsEmitter(workspace:WaitForChild("EmitPart"))
+
+-- load emitters already in workspace
+for _,object in workspace:GetDescendants() do
+    onEmitter3DAdded(object)
+end
+
+-- set up to add new emitters
+workspace.DescendantAdded:Connect(onEmitter3DAdded)
+
+return Emitter3D
