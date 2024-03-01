@@ -1,6 +1,6 @@
 -- Settings
 local minimumEmitScripts = 3
-local maxParticlesPerScript = 50
+local maxParticlesPerScript = 200
 
 
 -- Services
@@ -10,10 +10,10 @@ local RunService = game:GetService("RunService")
 local activeEmitScripts = script.Parent.ActiveEmitScripts
 
 -- Variables
-local allEmitScripts = {}
-
 local Emitter3D = {}
+local allEmitActors:{Actor} = {}
 
+-- Local Functions
 local function random(min:number,max:number)
     return Random.new():NextNumber(min,max)
 end
@@ -24,10 +24,41 @@ end
 
 local function addEmitScript()
     local emitterScriptActor = script.Parent.EmitterScriptActor:Clone()
-    table.insert(allEmitScripts,emitterScriptActor)
+    table.insert(allEmitActors,emitterScriptActor)
     emitterScriptActor.Parent = activeEmitScripts
 
     emitterScriptActor:SendMessage("BeginDetection")
+    return emitterScriptActor
+end
+
+local function getEmitActor()
+    local chosenEmitActorInfo
+    for _,emitActor in allEmitActors do
+        local amountToEmit = #emitActor.ToEmit:GetChildren()
+        if amountToEmit==maxParticlesPerScript then
+            continue
+        end
+
+        -- if there is no chosen actor then we can just use this one
+        local info = {actor = emitActor, amount = amountToEmit}
+        if not chosenEmitActorInfo then
+            chosenEmitActorInfo = info
+            continue
+        end
+
+        -- we need to pick the script with lowest amount to emit so load is spread evenly
+        if amountToEmit>chosenEmitActorInfo.amount then
+            continue
+        end
+        chosenEmitActorInfo = info
+    end
+
+    -- if there are no avalibe ones then make new one
+    if not chosenEmitActorInfo then
+        return addEmitScript()
+    end
+
+    return chosenEmitActorInfo.actor
 end
 
 local function emit3DParticle(emitter3D:Part,amount:number)
@@ -42,7 +73,7 @@ local function emit3DParticle(emitter3D:Part,amount:number)
         sourcePointer.Value = emitter3D
         sourcePointer.Parent = emitInfo
 
-        local chosenEmitActor:Actor = allEmitScripts[1]
+        local chosenEmitActor:Actor =  getEmitActor()
         emitInfo.Parent = chosenEmitActor.ToEmit
     end    
 end
@@ -68,8 +99,6 @@ function Emitter3D.AssignPartAsEmitter(part:BasePart)
         return
     end
 
-    onEmitterAdded(part)
-end
 
 local function onEmitter3DAdded(emitter3D:BasePart)
     if not emitter3D:HasTag("Emitter3D") then
@@ -79,6 +108,9 @@ local function onEmitter3DAdded(emitter3D:BasePart)
     onEmitterAdded(emitter3D)
 end
 
+for _ = 1,minimumEmitScripts do
+    addEmitScript()
+end
 
 -- load emitters already in workspace
 for _,object in workspace:GetDescendants() do
