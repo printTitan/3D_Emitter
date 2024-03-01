@@ -65,8 +65,9 @@ end
 local function loadEmit(emitInfo:Configuration)
     local emitter3D:Part = emitInfo.SourcePointer.Value
     local particle3D:BasePart = emitter3D:Clone()
+    particle3D:RemoveTag("Emitter3D")
     particle3D.Parent = workspace.Terrain
-
+    
     -- load particle from emit config
     table.insert(activeParticles,{
         Speed = emitInfo:GetAttribute("Speed");

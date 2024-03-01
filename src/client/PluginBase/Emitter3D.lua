@@ -64,7 +64,7 @@ function Emitter3D.AssignPartAsEmitter(part:BasePart)
     emitterConfig:SetAttribute("Speed",NumberRange.new(5))
     emitterConfig.Parent = part
     part:AddTag("Emitter3D")
-    if part.Parent~=workspace then
+    if not part:IsDescendantOf(workspace) then
         return
     end
 
